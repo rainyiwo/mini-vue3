@@ -1,10 +1,23 @@
 // baseHandlers.js
 import {track, trigger } from './effect'
 import {isObject, hasOwn} from '../shared'
-import {reactive} from './reactive'
+import {
+  reactive,
+  ReactiveFlags,
+  reactiveMap,
+  shallowReactiveMap
+} from './reactive'
 
 function createGetter (shallow = false) {
   return function get (target, key, receiver) {
+    // 是不是已经存在两个map中，实际还会更多 还有readonly啥乱遭的
+    const isExistMap = () => key === ReactiveFlags.RAW && (receiver === reactiveMap.get(target) || receiver === shallowReactiveMap.get(target))
+
+    if (key === ReactiveFlags.IS_REACTIVE) {
+      return true
+    } else if (isExistMap()) {
+      return target
+    }
 
     // Reflect 是一个内置的对象，它提供拦截 JavaScript 操作的方法。
     // Reflect.get(target, propertyKey[, receiver])
@@ -35,10 +48,34 @@ function createSetter () {
   }
 }
 
+function has (target, key) {
+  const res = Reflect.has(target, key)
+  track(target, 'has', key)
+  return res
+}
+
+function deleteProperty (target, key) {
+  const hadKey = hasOwn(target, key)
+  const result = Reflect.deleteProperty(target, key)
+  if (result && hadKey) {
+    trigger(target, 'delete', key)
+  }
+  return result
+}
+
 const set = createSetter()
 const get = createGetter()
+const shallowReactiveGet = createGetter(true)
 
-export const mutableHandles = {
+export const mutableHandlers = {
   set,
-  get
+  get,
+  has,
+  deleteProperty
+}
+export const shallowReactiveHandlers = {
+  get: shallowReactiveGet,
+  set,
+  has,
+  deleteProperty
 }
