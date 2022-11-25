@@ -5,12 +5,7 @@
 </template>
 
 <script setup>
-let num = ref(1)
-let double = computed(()=>num.value*2)
-function add(){
-  num.value++
-}
-onMounted(()=>{
-  console.log('mounted')
-})
+import reac from './index'
+
+console.log('reac', reac)
 </script>

@@ -1,4 +1,20 @@
+// computed.js
+
 import {track, trigger, effect} from './effect'
+
+export function computed(getterOrOptions) {
+  let getter, setter
+  if (typeof getterOrOptions === 'function') {
+    getter = getterOrOptions
+    setter = () => {
+      console.warn('计算属性不能修改')
+    }
+  } else {
+    getter = getterOrOptions.get
+    setter = getterOrOptions.set
+  }
+  return new ComputedRefImpl(getter, setter)
+}
 
 class ComputedRefImpl {
   constructor(getter, setter) {
